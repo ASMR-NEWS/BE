@@ -1,4 +1,4 @@
-package com.neutral.newspaper.domain.member;
+package com.neutral.newspaper.member.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

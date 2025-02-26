@@ -1,5 +1,6 @@
-package com.neutral.newspaper.domain.member;
+package com.neutral.newspaper.member;
 
+import com.neutral.newspaper.member.domain.Member;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
