@@ -3,8 +3,10 @@ package com.neutral.newspaper.member.service;
 import com.neutral.newspaper.member.MemberRepository;
 import com.neutral.newspaper.member.domain.Member;
 import com.neutral.newspaper.member.dto.MemberJoinRequestDTO;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Service
 public class MemberService {
     private final MemberRepository memberRepository;
 
