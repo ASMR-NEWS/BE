@@ -3,6 +3,7 @@ package com.neutral.newspaper.member.service;
 import com.neutral.newspaper.member.MemberRepository;
 import com.neutral.newspaper.member.domain.Member;
 import com.neutral.newspaper.member.dto.MemberJoinRequestDTO;
+import com.neutral.newspaper.member.dto.MemberLoginRequestDto;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,20 @@ public class MemberService {
         memberRepository.save(member);
 
         return "회원가입이 완료되었습니다.";
+    }
+
+    @Transactional
+    public String login(MemberLoginRequestDto loginRequestDto) {
+        // 존재하지 않는 회원일 경우
+        Member member = memberRepository.findByEmail(loginRequestDto.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+
+        // 패스워드가 일치하지 않는 경우
+        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 잘못되었습니다.");
+        }
+
+        return "로그인이 완료되었습니다.";
     }
 
     private boolean isValidPassword(String password) {
