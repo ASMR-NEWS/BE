@@ -1,6 +1,7 @@
 package com.neutral.newspaper.member.controller;
 
 import com.neutral.newspaper.member.dto.MemberJoinRequestDTO;
+import com.neutral.newspaper.member.dto.MemberLoginRequestDto;
 import com.neutral.newspaper.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,12 @@ public class MemberController {
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody MemberJoinRequestDTO joinRequest) {
         String response = memberService.registerMember(joinRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody MemberLoginRequestDto loginRequest) {
+        String response = memberService.login(loginRequest);
         return ResponseEntity.ok(response);
     }
 }
