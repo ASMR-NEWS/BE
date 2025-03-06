@@ -1,6 +1,6 @@
 package com.neutral.newspaper.member.controller;
 
-import com.neutral.newspaper.member.dto.MemberJoinRequestDTO;
+import com.neutral.newspaper.member.dto.MemberJoinRequestDto;
 import com.neutral.newspaper.member.dto.MemberLoginRequestDto;
 import com.neutral.newspaper.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody MemberJoinRequestDTO joinRequest) {
+    public ResponseEntity<String> signup(@RequestBody MemberJoinRequestDto joinRequest) {
         String response = memberService.registerMember(joinRequest);
         return ResponseEntity.ok(response);
     }
