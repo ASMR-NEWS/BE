@@ -2,6 +2,7 @@ package com.neutral.newspaper.member.controller;
 
 import com.neutral.newspaper.member.dto.MemberJoinRequestDto;
 import com.neutral.newspaper.member.dto.MemberLoginRequestDto;
+import com.neutral.newspaper.member.dto.MemberUpdatePasswordDto;
 import com.neutral.newspaper.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,5 +28,11 @@ public class MemberController {
     public ResponseEntity<String> login(@RequestBody MemberLoginRequestDto loginRequest) {
         String response = memberService.login(loginRequest);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/update-password")
+    public ResponseEntity<Void> updatePassword(@RequestBody MemberUpdatePasswordDto updatePasswordRequest) {
+        memberService.updatePassword(updatePasswordRequest);
+        return ResponseEntity.noContent().build();
     }
 }
