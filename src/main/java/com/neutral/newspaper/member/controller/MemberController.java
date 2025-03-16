@@ -1,5 +1,6 @@
 package com.neutral.newspaper.member.controller;
 
+import com.neutral.newspaper.jwt.JwtToken;
 import com.neutral.newspaper.member.dto.MemberJoinRequestDto;
 import com.neutral.newspaper.member.dto.MemberLoginRequestDto;
 import com.neutral.newspaper.member.dto.MemberUpdatePasswordDto;
@@ -25,9 +26,9 @@ public class MemberController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody MemberLoginRequestDto loginRequest) {
-        String response = memberService.login(loginRequest);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<JwtToken> login(@RequestBody MemberLoginRequestDto loginRequest) {
+        JwtToken jwtToken = memberService.login(loginRequest);
+        return ResponseEntity.ok(jwtToken);
     }
 
     @PostMapping("/update-password")
