@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class MemberUpdatePasswordDto {
-    private String email;
     private String oldPassword;
     private String newPassword;
 }
