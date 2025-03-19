@@ -9,4 +9,5 @@ public class MemberJoinRequestDto {
     private String name;
     private String email;
     private String password;
+    private String phoneNumber;
 }

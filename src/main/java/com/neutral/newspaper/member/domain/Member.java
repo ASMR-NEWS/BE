@@ -29,11 +29,15 @@ public class Member {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private String phoneNumber;
+
     @Builder
-    public Member(String name, String email, String password) {
+    public Member(String name, String email, String password, String phoneNumber) {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.phoneNumber = phoneNumber;
     }
 
     public void updatePassword(String newPassword) {
