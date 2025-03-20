@@ -34,10 +34,15 @@ public class MemberService {
 
         String encodedPassword = passwordEncoder.encode(joinRequest.getPassword());
 
+        if (!isValidPhoneNumber(joinRequest.getPhoneNumber())) {
+            throw new IllegalArgumentException("휴대폰 번호는 10~11자여야 합니다.");
+        }
+
         Member member = Member.builder()
                 .name(joinRequest.getName())
                 .email(joinRequest.getEmail())
                 .password(encodedPassword)
+                .phoneNumber(joinRequest.getPhoneNumber())
                 .build();
 
         memberRepository.save(member);
@@ -86,5 +91,9 @@ public class MemberService {
 
     private boolean isValidPassword(String password) {
         return password.matches("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,16}$");
+    }
+
+    private boolean isValidPhoneNumber(String phoneNumber) {
+        return phoneNumber.matches("^\\\\d{3}-\\\\d{3,4}-\\\\d{4}$");
     }
 }
