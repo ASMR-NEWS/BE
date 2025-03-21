@@ -4,9 +4,9 @@ import com.neutral.newspaper.jwt.JwtToken;
 import com.neutral.newspaper.jwt.JwtTokenProvider;
 import com.neutral.newspaper.member.MemberRepository;
 import com.neutral.newspaper.member.domain.Member;
-import com.neutral.newspaper.member.dto.MemberJoinRequestDto;
-import com.neutral.newspaper.member.dto.MemberLoginRequestDto;
-import com.neutral.newspaper.member.dto.MemberUpdatePasswordDto;
+import com.neutral.newspaper.member.dto.JoinRequestDto;
+import com.neutral.newspaper.member.dto.LoginRequestDto;
+import com.neutral.newspaper.member.dto.UpdatePasswordDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,7 +23,7 @@ public class MemberService {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
-    public String registerMember(MemberJoinRequestDto joinRequest) {
+    public String registerMember(JoinRequestDto joinRequest) {
         if (memberRepository.findByEmail(joinRequest.getEmail()).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
         }
@@ -51,7 +51,7 @@ public class MemberService {
     }
 
     @Transactional
-    public JwtToken login(MemberLoginRequestDto loginRequest) {
+    public JwtToken login(LoginRequestDto loginRequest) {
         // 존재하지 않는 회원일 경우
         Member member = memberRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
@@ -67,7 +67,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void updatePassword(MemberUpdatePasswordDto updatePasswordRequest) {
+    public void updatePassword(UpdatePasswordDto updatePasswordRequest) {
         // 현재 인증된 사용자 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         //authentication.getName()은 UsernamePasswordAuthenticationToken의 첫 번째 파라미터인 email이 저장되기 때문에 getName()을 이용
