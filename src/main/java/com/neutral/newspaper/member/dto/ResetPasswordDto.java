@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class FindPasswordDto {
+public class ResetPasswordDto {
     private String email;
-    private String phoneNumber;
+    private String newPassword;
 }
