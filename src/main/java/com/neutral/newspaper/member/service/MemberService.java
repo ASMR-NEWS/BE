@@ -1,5 +1,7 @@
 package com.neutral.newspaper.member.service;
 
+import com.neutral.newspaper.interest.InterestRepository;
+import com.neutral.newspaper.interest.domain.Interest;
 import com.neutral.newspaper.jwt.JwtToken;
 import com.neutral.newspaper.jwt.JwtTokenProvider;
 import com.neutral.newspaper.member.MemberRepository;
@@ -11,6 +13,7 @@ import com.neutral.newspaper.member.dto.ResetPasswordDto;
 import com.neutral.newspaper.member.dto.UpdatePasswordDto;
 import com.neutral.newspaper.member.dto.VerifyCodeDto;
 import com.neutral.newspaper.redis.RedisService;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final InterestRepository interestRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisService redisService;
@@ -51,6 +55,13 @@ public class MemberService {
                 .password(encodedPassword)
                 .phoneNumber(joinRequest.getPhoneNumber())
                 .build();
+
+        List<Interest> interests = joinRequest.getInterestNames().stream()
+                        .map(name -> interestRepository.findByName(name)
+                                .orElseGet(() -> interestRepository.save(new Interest(name))))
+                        .toList();
+
+        member.setInterests(interests);
 
         memberRepository.save(member);
 
