@@ -160,7 +160,7 @@ public class MemberService {
     }
 
     private boolean isValidPhoneNumber(String phoneNumber) {
-        return phoneNumber.matches("^\\\\d{3}-\\\\d{3,4}-\\\\d{4}$");
+        return phoneNumber.matches("^\\d{3}-\\d{3,4}-\\d{4}$");
     }
 
     private String generateVerificationCode() {
