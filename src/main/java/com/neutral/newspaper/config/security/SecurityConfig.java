@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,13 +24,17 @@ public class SecurityConfig {
         return httpSecurity
                 // JWT 기반 인증을 사용하기 때문에 CSRF 보호 기능 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
+                // H2 콘솔 iframe 허용
+                .headers(headers -> headers
+                        .frameOptions(FrameOptionsConfig::disable)
+                )
                 // 세션을 STATELESS로 설정
                 .sessionManagement((sessionManagementConfig) ->
                         sessionManagementConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 // 요청에 대한 인증 및 권한 부여 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("member/signup", "member/login", "member/update-password").permitAll() //인증 없이 접근 가능
+                        .requestMatchers("/member/signup", "/member/login", "/member/update-password", "/h2-console/**").permitAll() //인증 없이 접근 가능
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
