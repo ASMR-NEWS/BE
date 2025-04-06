@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.neutral.newspaper.jwt.JwtToken;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
+import com.neutral.newspaper.member.dto.UpdatePasswordDto;
 import com.neutral.newspaper.member.service.MemberService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -25,7 +28,7 @@ public class MemberServiceTest {
 
     @Nested
     @DisplayName("회원가입 테스트")
-    class signUpTest {
+    class SignUpTest {
 
         @Test
         @DisplayName("회원가입 성공 케이스")
@@ -93,7 +96,7 @@ public class MemberServiceTest {
 
     @Nested
     @DisplayName("로그인 테스트")
-    class loginTest {
+    class LoginTest {
 
         @Test
         @DisplayName("로그인 성공 케이스")
@@ -125,14 +128,10 @@ public class MemberServiceTest {
             memberService.registerMember(joinRequestDto);
 
             LoginRequestDto loginRequestDto = new LoginRequestDto(
-                    "fail@example.com", "TestPassword12!!"
+                    "fail@example.com", "TestPassword12!"
             );
 
-            // when
-            JwtToken jwtToken = memberService.login(loginRequestDto);
-
-            // then
-            assertNull(jwtToken);
+            // when, then
             assertThatThrownBy(() -> memberService.login(loginRequestDto))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("존재하지 않는 회원입니다.");
@@ -151,14 +150,82 @@ public class MemberServiceTest {
                     "email@example.com", "TestPassword12!!"
             );
 
-            // when
-            JwtToken jwtToken = memberService.login(loginRequestDto);
-
-            // then
-            assertNull(jwtToken);
+            // when, then
             assertThatThrownBy(() -> memberService.login(loginRequestDto))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("비밀번호가 잘못되었습니다.");
+        }
+    }
+
+    @Nested
+    @DisplayName("비밀번호 변경 테스트")
+    class ChangePasswordTest {
+
+        @Test
+        @DisplayName("비밀번호 변경 성공 케이스")
+        void successChangingPassword() {
+            // given
+            JoinRequestDto joinRequestDto = new JoinRequestDto(
+                    "홍길동", "email@example.com", "TestPassword12!", "010-1234-5678", List.of("경제", "스포츠")
+            );
+            memberService.registerMember(joinRequestDto);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken("email@example.com", null);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            UpdatePasswordDto updatePasswordDto = new UpdatePasswordDto(
+                    "TestPassword12!", "Password12!"
+            );
+
+            // when, then
+            assertDoesNotThrow(() -> memberService.updatePassword(updatePasswordDto));
+        }
+
+        @Test
+        @DisplayName("비밀번호 변경 실패 케이스: 기존 비밀번호 불일치")
+        void failChangingPasswordOldPasswordMismatch() {
+            // given
+            JoinRequestDto joinRequestDto = new JoinRequestDto(
+                    "홍길동", "email@example.com", "TestPassword12!", "010-1234-5678", List.of("경제", "스포츠")
+            );
+            memberService.registerMember(joinRequestDto);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken("email@example.com", null);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            UpdatePasswordDto updatePasswordDto = new UpdatePasswordDto(
+                    "TestPassword12!!", "Password12!"
+            );
+
+            // when, then
+            assertThatThrownBy(() -> memberService.updatePassword(updatePasswordDto))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        @Test
+        @DisplayName("비밀번호 변경 실패 케이스: 새 비밀번호 조건 미충족")
+        void failChangingPasswordInvalidNewPassword() {
+            // given
+            JoinRequestDto joinRequestDto = new JoinRequestDto(
+                    "홍길동", "email@example.com", "TestPassword12!", "010-1234-5678", List.of("경제", "스포츠")
+            );
+            memberService.registerMember(joinRequestDto);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken("email@example.com", null);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            UpdatePasswordDto updatePasswordDto = new UpdatePasswordDto(
+                    "TestPassword12!", "AnotherPassword12!"
+            );
+
+            // when, then
+            assertThatThrownBy(() -> memberService.updatePassword(updatePasswordDto))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
         }
     }
 }
