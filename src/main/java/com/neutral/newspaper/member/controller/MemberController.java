@@ -1,9 +1,12 @@
 package com.neutral.newspaper.member.controller;
 
 import com.neutral.newspaper.jwt.JwtToken;
+import com.neutral.newspaper.member.dto.FindPasswordDto;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
+import com.neutral.newspaper.member.dto.ResetPasswordDto;
 import com.neutral.newspaper.member.dto.UpdatePasswordDto;
+import com.neutral.newspaper.member.dto.VerifyCodeDto;
 import com.neutral.newspaper.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +37,24 @@ public class MemberController {
     @PostMapping("/update-password")
     public ResponseEntity<Void> updatePassword(@RequestBody UpdatePasswordDto updatePasswordRequest) {
         memberService.updatePassword(updatePasswordRequest);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/send-password-code")
+    public ResponseEntity<Void> sendPasswordResetCode(@RequestBody FindPasswordDto findPasswordRequest) {
+        memberService.sendPasswordResetCode(findPasswordRequest);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/verify-code")
+    public ResponseEntity<Void> verifyCode(@RequestBody VerifyCodeDto verifyCodeRequest) {
+        memberService.verifyCode(verifyCodeRequest);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordDto resetPasswordRequest) {
+        memberService.resetPassword(resetPasswordRequest);
         return ResponseEntity.noContent().build();
     }
 }
