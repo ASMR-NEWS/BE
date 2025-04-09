@@ -15,6 +15,7 @@ import com.neutral.newspaper.member.dto.FindPasswordDto;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
 import com.neutral.newspaper.member.dto.UpdatePasswordDto;
+import com.neutral.newspaper.member.dto.VerifyCodeDto;
 import com.neutral.newspaper.member.service.EmailService;
 import com.neutral.newspaper.member.service.MemberService;
 import com.neutral.newspaper.redis.RedisService;
@@ -32,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -341,6 +341,54 @@ public class MemberServiceTest {
             assertThatThrownBy(() -> memberService.sendPasswordResetCode(findPasswordRequest))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("휴대폰 번호가 일치하지 않습니다.");
+        }
+    }
+
+    @ExtendWith(MockitoExtension.class)
+    @DisplayName("비밀번호 초기화 코드 유효성 검사 테스트")
+    static class VerifyCodeTest {
+
+        @InjectMocks
+        private MemberService memberService;
+
+        @Mock
+        private RedisService redisService;
+
+        @Test
+        @DisplayName("비밀번호 초기화 코드 인증 성공 케이스")
+        void successVerifyingCode() {
+            // given
+            VerifyCodeDto verifyCodeRequest = new VerifyCodeDto(
+                    "email@example.com", "123456"
+            );
+
+            given(redisService.getData(verifyCodeRequest.getEmail()))
+                    .willReturn("123456");
+
+            // when
+            memberService.verifyCode(verifyCodeRequest);
+
+            // then
+            then(redisService).should().saveData(
+                    eq(verifyCodeRequest.getEmail() + ":verified"), eq("true"), eq(5L), eq(TimeUnit.MINUTES)
+            );
+        }
+
+        @Test
+        @DisplayName("비밀번호 초기화 코드 인증 실패 케이스")
+        void failVerifyingCode() {
+            // given
+            VerifyCodeDto verifyCodeRequest = new VerifyCodeDto(
+                    "email@example.com", "654321"
+            );
+
+            given(redisService.getData(verifyCodeRequest.getEmail()))
+                    .willReturn("123456");
+
+            // when, then
+            assertThatThrownBy(() -> memberService.verifyCode(verifyCodeRequest))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("인증번호가 일치하지 않습니다.");
         }
     }
 }
