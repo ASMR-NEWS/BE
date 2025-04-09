@@ -49,8 +49,12 @@ dependencies {
 
 	// h2
 	runtimeOnly 'com.h2database:h2'
+
+	// JUnit5
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.4'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
 }
 
-tasks.named('test') {
+test {
 	useJUnitPlatform()
 }

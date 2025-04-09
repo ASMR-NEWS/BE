@@ -3,20 +3,36 @@ package com.neutral.newspaper.member;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 import com.neutral.newspaper.jwt.JwtToken;
+import com.neutral.newspaper.member.domain.Member;
+import com.neutral.newspaper.member.dto.FindPasswordDto;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
 import com.neutral.newspaper.member.dto.UpdatePasswordDto;
+import com.neutral.newspaper.member.service.EmailService;
 import com.neutral.newspaper.member.service.MemberService;
+import com.neutral.newspaper.redis.RedisService;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -226,6 +242,105 @@ public class MemberServiceTest {
             assertThatThrownBy(() -> memberService.updatePassword(updatePasswordDto))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
+        }
+    }
+
+    // Mockito를 사용하기 위한 확장 선언
+    @ExtendWith(MockitoExtension.class)
+    @DisplayName("비밀번호 초기화 테스트")
+    static class SendPasswordResetCodeTest {
+
+        // @Mock 객체들을 자동으로 주입해서 테스트 대상 객체를 만들어줌
+        @InjectMocks
+        private MemberService memberService;
+
+        // 실제 객체를 사용하는 대신 가짜 객체를 만들어주는 애노테이션
+        @Mock
+        private MemberRepository memberRepository;
+
+        @Mock
+        private EmailService emailService;
+
+        @Mock
+        private RedisService redisService;
+
+        @Test
+        @DisplayName("인증 코드 전송 성공 케이스")
+        void successSendPasswordResetCode() {
+            // given
+            FindPasswordDto findPasswordRequest = new FindPasswordDto(
+                    "email@example.com", "010-1234-5678"
+            );
+            Member member = Member.builder()
+                    .name("홍길동")
+                    .email("email@example.com")
+                    .password("testPassword12!")
+                    .phoneNumber("010-1234-5678")
+                    .build();
+
+            // Mock 객체가 어떤 값을 반환해야 하는지 설명
+            // memberRepository.findByEmail(findPasswordRequest.getEmail())을 진행하면 멤버를 반환
+            given(memberRepository.findByEmail(findPasswordRequest.getEmail()))
+                    .willReturn(Optional.of(member));
+
+            // when
+            memberService.sendPasswordResetCode(findPasswordRequest);
+
+            // then
+            // Mock 객체가 특정 메서드를 실제로 호출했는지 검증하는 구문
+            then(emailService).should().sendVerificationCode(
+                    // eq(value): 정확히 value와 같은 값이어야 함
+                    eq(findPasswordRequest.getEmail()), anyString(), contains("비밀번호 초기화 인증번호")
+            );
+            then(redisService).should().saveData(
+                    eq(findPasswordRequest.getEmail()), anyString(), eq(5L), eq(TimeUnit.MINUTES)
+            );
+        }
+
+        @Test
+        @DisplayName("인증 코드 전송 실패 케이스: 이메일 오류")
+        void failSendPasswordResetCodeEmailMismatch() {
+            // given
+            FindPasswordDto findPasswordRequest = new FindPasswordDto(
+                    "emails@example.com", "010-1234-5678"
+            );
+            Member member = Member.builder()
+                    .name("홍길동")
+                    .email("email@example.com")
+                    .password("testPassword12!")
+                    .phoneNumber("010-1234-5678")
+                    .build();
+
+            given(memberRepository.findByEmail(findPasswordRequest.getEmail()))
+                    .willReturn(Optional.empty());
+
+            // when, then
+            assertThatThrownBy(() -> memberService.sendPasswordResetCode(findPasswordRequest))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("회원 정보를 찾을 수 없습니다.");
+        }
+
+        @Test
+        @DisplayName("인증 코드 전송 실패 케이스: 휴대전화 번호 불일치")
+        void failSendPasswordResetCodePhoneNumberMismatch() {
+            // given
+            FindPasswordDto findPasswordRequest = new FindPasswordDto(
+                    "emails@example.com", "010-4321-5678"
+            );
+            Member member = Member.builder()
+                    .name("홍길동")
+                    .email("email@example.com")
+                    .password("testPassword12!")
+                    .phoneNumber("010-1234-5678")
+                    .build();
+
+            given(memberRepository.findByEmail(findPasswordRequest.getEmail()))
+                    .willReturn(Optional.of(member));
+
+            // when, then
+            assertThatThrownBy(() -> memberService.sendPasswordResetCode(findPasswordRequest))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("휴대폰 번호가 일치하지 않습니다.");
         }
     }
 }
