@@ -112,7 +112,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(findPasswordRequest.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
-        if (!findPasswordRequest.getPhoneNumber().equals(member.getPassword())) {
+        if (!findPasswordRequest.getPhoneNumber().equals(member.getPhoneNumber())) {
             throw new IllegalArgumentException("휴대폰 번호가 일치하지 않습니다.");
         }
 
