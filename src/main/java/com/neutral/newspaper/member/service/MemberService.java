@@ -124,13 +124,13 @@ public class MemberService {
     @Transactional
     public void verifyCode(VerifyCodeDto verifyCodeRequest) {
         String code = redisService.getData(verifyCodeRequest.getEmail());
-        if (code == null || code.equals(verifyCodeRequest.getVerificationCode())) {
+        if (code == null || !code.equals(verifyCodeRequest.getVerificationCode())) {
             throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
         }
 
         // 인증 성공 시 별도로 인증 완료 상태를 저장
         // "user@email.com:verified"의 형식으로 key를 저장하기 위해 ":verified"도 같이 삽입
-        redisService.saveData(verifyCodeRequest.getEmail(), ":verified", 5, TimeUnit.MINUTES);
+        redisService.saveData(verifyCodeRequest.getEmail() + ":verified", "true", 5, TimeUnit.MINUTES);
     }
 
     @Transactional
