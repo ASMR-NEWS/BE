@@ -14,6 +14,7 @@ import com.neutral.newspaper.member.domain.Member;
 import com.neutral.newspaper.member.dto.FindPasswordDto;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
+import com.neutral.newspaper.member.dto.ResetPasswordDto;
 import com.neutral.newspaper.member.dto.UpdatePasswordDto;
 import com.neutral.newspaper.member.dto.VerifyCodeDto;
 import com.neutral.newspaper.member.service.EmailService;
@@ -33,6 +34,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -389,6 +392,126 @@ public class MemberServiceTest {
             assertThatThrownBy(() -> memberService.verifyCode(verifyCodeRequest))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("인증번호가 일치하지 않습니다.");
+        }
+    }
+
+    @ExtendWith(MockitoExtension.class)
+    @DisplayName("비밀번호 초기화  테스트")
+    static class ResetPasswordTest {
+
+        @InjectMocks
+        private MemberService memberService;
+
+        @Mock
+        private RedisService redisService;
+
+        @Mock
+        private MemberRepository memberRepository;
+
+        @Mock
+        private BCryptPasswordEncoder passwordEncoder;
+
+        @Test
+        @DisplayName("비밀번호 초기화 성공 케이스")
+        void successResetPassword() {
+            // given
+            ResetPasswordDto resetPasswordRequest = new ResetPasswordDto(
+                    "email@example.com", "newPassword12!"
+            );
+            Member member = Member.builder()
+                    .name("홍길동")
+                    .email("email@example.com")
+                    .password("testPassword12!")
+                    .phoneNumber("010-1234-5678")
+                    .build();
+
+            given(memberRepository.findByEmail(resetPasswordRequest.getEmail()))
+                    .willReturn(Optional.of(member));
+            given(redisService.getData(resetPasswordRequest.getEmail() + ":verified"))
+                    .willReturn("true");
+            given(passwordEncoder.encode(resetPasswordRequest.getNewPassword()))
+                    .willReturn("변환된비밀번호");
+
+            // when
+            memberService.resetPassword(resetPasswordRequest);
+
+            // then
+            then(redisService).should().deleteData(
+                    eq(resetPasswordRequest.getEmail() + ":verified")
+            );
+        }
+
+        @Test
+        @DisplayName("비밀번호 초기화 실패 케이스: 존재하지 않는 회원일 경우")
+        void failResetPasswordNotRegistered() {
+            // given
+            ResetPasswordDto resetPasswordRequest = new ResetPasswordDto(
+                    "emails@example.com", "newPassword12!"
+            );
+            Member member = Member.builder()
+                    .name("홍길동")
+                    .email("email@example.com")
+                    .password("testPassword12!")
+                    .phoneNumber("010-1234-5678")
+                    .build();
+
+            given(memberRepository.findByEmail(resetPasswordRequest.getEmail()))
+                    .willReturn(Optional.empty());
+
+            // when, then
+            assertThatThrownBy(() -> memberService.resetPassword(resetPasswordRequest))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("회원 정보를 찾을 수 없습니다.");
+        }
+
+        @Test
+        @DisplayName("비밀번호 초기화 실패 케이스: 초기화 코드가 인증되지 않은 상황")
+        void failResetPasswordUnverifiedCode() {
+            // given
+            ResetPasswordDto resetPasswordRequest = new ResetPasswordDto(
+                    "email@example.com", "newPassword12!"
+            );
+            Member member = Member.builder()
+                    .name("홍길동")
+                    .email("email@example.com")
+                    .password("testPassword12!")
+                    .phoneNumber("010-1234-5678")
+                    .build();
+
+            given(memberRepository.findByEmail(resetPasswordRequest.getEmail()))
+                    .willReturn(Optional.of(member));
+            given(redisService.getData(resetPasswordRequest.getEmail() + ":verified"))
+                    .willReturn(null);
+
+            // when, then
+            assertThatThrownBy(() -> memberService.resetPassword(resetPasswordRequest))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("인증이 완료되지 않았습니다.");
+        }
+
+        @Test
+        @DisplayName("비밀번호 초기화 실패 케이스: 새 비밀번호가 조건에 맞지 않는 경우")
+        void failResetPasswordInvalidNewPassword() {
+            // given
+            ResetPasswordDto resetPasswordRequest = new ResetPasswordDto(
+                    "email@example.com", "newPassword1234567!"
+            );
+            Member member = Member.builder()
+                    .name("홍길동")
+                    .email("email@example.com")
+                    .password("testPassword12!")
+                    .phoneNumber("010-1234-5678")
+                    .build();
+
+            given(memberRepository.findByEmail(resetPasswordRequest.getEmail()))
+                    .willReturn(Optional.of(member));
+            given(redisService.getData(resetPasswordRequest.getEmail() + ":verified"))
+                    .willReturn("true");
+
+            // when, then
+            assertThatThrownBy(() -> memberService.resetPassword(resetPasswordRequest))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
         }
     }
 }
