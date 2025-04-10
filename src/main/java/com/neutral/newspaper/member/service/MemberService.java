@@ -135,6 +135,9 @@ public class MemberService {
 
     @Transactional
     public void resetPassword(ResetPasswordDto resetPasswordRequest) {
+        Member member = memberRepository.findByEmail(resetPasswordRequest.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+
         String verified = redisService.getData(resetPasswordRequest.getEmail() + ":verified");
 
         // verified는 String이고 null일 수도 있기 때문에 !"true".equals()를 이용
@@ -145,9 +148,6 @@ public class MemberService {
         if (!isValidPassword(resetPasswordRequest.getNewPassword())) {
             throw new IllegalArgumentException("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
         }
-
-        Member member = memberRepository.findByEmail(resetPasswordRequest.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
         member.updatePassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
 
