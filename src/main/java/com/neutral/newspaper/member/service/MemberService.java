@@ -1,5 +1,7 @@
 package com.neutral.newspaper.member.service;
 
+import com.neutral.newspaper.global.CustomException;
+import com.neutral.newspaper.global.ErrorType;
 import com.neutral.newspaper.interest.InterestRepository;
 import com.neutral.newspaper.interest.domain.Interest;
 import com.neutral.newspaper.jwt.JwtToken;
@@ -36,17 +38,17 @@ public class MemberService {
     @Transactional
     public String registerMember(JoinRequestDto joinRequest) {
         if (memberRepository.findByEmail(joinRequest.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 회원입니다.");
+            throw new CustomException(ErrorType.DUPLICATED_EMAIL);
         }
 
         if (!isValidPassword(joinRequest.getPassword())) {
-            throw new IllegalArgumentException("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
+            throw new CustomException(ErrorType.INVALID_PASSWORD_FORMAT);
         }
 
         String encodedPassword = passwordEncoder.encode(joinRequest.getPassword());
 
         if (!isValidPhoneNumber(joinRequest.getPhoneNumber())) {
-            throw new IllegalArgumentException("휴대폰 번호는 10~11자여야 합니다.");
+            throw new CustomException(ErrorType.INVALID_PHONE_NUMBER_FORMAT);
         }
 
         Member member = Member.builder()
@@ -72,11 +74,11 @@ public class MemberService {
     public JwtToken login(LoginRequestDto loginRequest) {
         // 존재하지 않는 회원일 경우
         Member member = memberRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_REGISTERED_MEMBER));
 
         // 패스워드가 일치하지 않는 경우
         if (!passwordEncoder.matches(loginRequest.getPassword(), member.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 잘못되었습니다.");
+            throw new CustomException(ErrorType.NOT_MATCHED_PASSWORD);
         }
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(member.getEmail(), member.getPassword());
@@ -92,16 +94,16 @@ public class MemberService {
         String email = authentication.getName();
 
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
         // 기존 비밀번호가 일치하지 않는 경우
         if (!passwordEncoder.matches(updatePasswordRequest.getOldPassword(), member.getPassword())) {
-            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            throw new CustomException(ErrorType.NOT_MATCHED_PASSWORD);
         }
 
         // 새로운 비밀번호가 조건을 충족하지 않은 경우
         if(!isValidPassword(updatePasswordRequest.getNewPassword())) {
-            throw new IllegalArgumentException("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
+            throw new CustomException(ErrorType.INVALID_PASSWORD_FORMAT);
         }
 
         member.updatePassword(passwordEncoder.encode(updatePasswordRequest.getNewPassword()));
@@ -110,10 +112,10 @@ public class MemberService {
     @Transactional
     public void sendPasswordResetCode(FindPasswordDto findPasswordRequest) {
         Member member = memberRepository.findByEmail(findPasswordRequest.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
         if (!findPasswordRequest.getPhoneNumber().equals(member.getPhoneNumber())) {
-            throw new IllegalArgumentException("휴대폰 번호가 일치하지 않습니다.");
+            throw new CustomException(ErrorType.NOT_MATCHED_PHONE_NUMBER);
         }
 
         String resetCode = generateVerificationCode();
@@ -125,7 +127,7 @@ public class MemberService {
     public void verifyCode(VerifyCodeDto verifyCodeRequest) {
         String code = redisService.getData(verifyCodeRequest.getEmail());
         if (code == null || !code.equals(verifyCodeRequest.getVerificationCode())) {
-            throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
+            throw new CustomException(ErrorType.NOT_MATCHED_VERIFYING_CODE);
         }
 
         // 인증 성공 시 별도로 인증 완료 상태를 저장
@@ -136,17 +138,17 @@ public class MemberService {
     @Transactional
     public void resetPassword(ResetPasswordDto resetPasswordRequest) {
         Member member = memberRepository.findByEmail(resetPasswordRequest.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
         String verified = redisService.getData(resetPasswordRequest.getEmail() + ":verified");
 
         // verified는 String이고 null일 수도 있기 때문에 !"true".equals()를 이용
         if (!"true".equals(verified)) {
-            throw new IllegalArgumentException("인증이 완료되지 않았습니다.");
+            throw new CustomException(ErrorType.UNAUTHORIZED_VERIFICATION);
         }
 
         if (!isValidPassword(resetPasswordRequest.getNewPassword())) {
-            throw new IllegalArgumentException("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
+            throw new CustomException(ErrorType.INVALID_PASSWORD_FORMAT);
         }
 
         member.updatePassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
