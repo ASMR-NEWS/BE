@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
+import com.neutral.newspaper.global.CustomException;
 import com.neutral.newspaper.jwt.JwtToken;
 import com.neutral.newspaper.member.domain.Member;
 import com.neutral.newspaper.member.dto.FindPasswordDto;
@@ -35,7 +36,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -80,7 +80,7 @@ public class MemberServiceTest {
 
             // then
             assertThatThrownBy(() -> memberService.registerMember(joinRequestDto2))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("이미 존재하는 회원입니다.");
         }
 
@@ -94,7 +94,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.registerMember(joinRequestDto))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
         }
 
@@ -108,7 +108,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.registerMember(joinRequestDto))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("휴대폰 번호는 10~11자여야 합니다.");
         }
     }
@@ -152,7 +152,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.login(loginRequestDto))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("존재하지 않는 회원입니다.");
         }
 
@@ -171,7 +171,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.login(loginRequestDto))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("비밀번호가 잘못되었습니다.");
         }
     }
@@ -220,7 +220,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.updatePassword(updatePasswordDto))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("현재 비밀번호가 일치하지 않습니다.");
         }
 
@@ -243,7 +243,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.updatePassword(updatePasswordDto))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
         }
     }
@@ -319,7 +319,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.sendPasswordResetCode(findPasswordRequest))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("회원 정보를 찾을 수 없습니다.");
         }
 
@@ -342,7 +342,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.sendPasswordResetCode(findPasswordRequest))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("휴대폰 번호가 일치하지 않습니다.");
         }
     }
@@ -390,7 +390,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.verifyCode(verifyCodeRequest))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("인증번호가 일치하지 않습니다.");
         }
     }
@@ -460,7 +460,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.resetPassword(resetPasswordRequest))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("회원 정보를 찾을 수 없습니다.");
         }
 
@@ -485,7 +485,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.resetPassword(resetPasswordRequest))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("인증이 완료되지 않았습니다.");
         }
 
@@ -510,7 +510,7 @@ public class MemberServiceTest {
 
             // when, then
             assertThatThrownBy(() -> memberService.resetPassword(resetPasswordRequest))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(CustomException.class)
                     .hasMessageContaining("비밀번호는 8~16자의 영어, 숫자, 특수기호(@$!%*?&)를 포함해야 합니다.");
         }
     }
