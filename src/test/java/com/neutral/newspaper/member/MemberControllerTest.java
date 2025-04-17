@@ -8,8 +8,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.neutral.newspaper.global.CustomException;
-import com.neutral.newspaper.global.ErrorType;
 import com.neutral.newspaper.jwt.JwtToken;
 import com.neutral.newspaper.member.controller.MemberController;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
@@ -18,7 +16,6 @@ import com.neutral.newspaper.member.service.MemberService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.shadow.com.univocity.parsers.annotations.Nested;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -53,6 +50,20 @@ public class MemberControllerTest {
         mockMvc.perform(post("/member/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(joinRequest))
+                        .with(csrf()))
+                .andExpect(status().isOk());
+    }
+
+    @WithMockUser
+    @Test
+    @DisplayName("로그인 성공 시 200 반환")
+    void loginSuccess() throws Exception {
+        LoginRequestDto dto = new LoginRequestDto("email@example.com", "TestPassword12!");
+        when(memberService.login(any())).thenReturn(new JwtToken("Bearer", "access-token", "refresh-token"));
+
+        mockMvc.perform(post("/member/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
                         .with(csrf()))
                 .andExpect(status().isOk());
     }
