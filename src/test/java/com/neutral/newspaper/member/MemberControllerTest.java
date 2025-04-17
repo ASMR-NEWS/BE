@@ -2,6 +2,7 @@ package com.neutral.newspaper.member;
 
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -12,6 +13,7 @@ import com.neutral.newspaper.jwt.JwtToken;
 import com.neutral.newspaper.member.controller.MemberController;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
+import com.neutral.newspaper.member.dto.UpdatePasswordDto;
 import com.neutral.newspaper.member.service.MemberService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -57,14 +59,28 @@ public class MemberControllerTest {
     @WithMockUser
     @Test
     @DisplayName("로그인 성공 시 200 반환")
-    void loginSuccess() throws Exception {
-        LoginRequestDto dto = new LoginRequestDto("email@example.com", "TestPassword12!");
+    void successLogin() throws Exception {
+        LoginRequestDto loginRequest = new LoginRequestDto("email@example.com", "TestPassword12!");
         when(memberService.login(any())).thenReturn(new JwtToken("Bearer", "access-token", "refresh-token"));
 
         mockMvc.perform(post("/member/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto))
+                        .content(objectMapper.writeValueAsString(loginRequest))
                         .with(csrf()))
                 .andExpect(status().isOk());
+    }
+
+    @WithMockUser
+    @Test
+    @DisplayName("비밀번호 변경 성공 시 204 반환")
+    void successChangingPassword() throws Exception {
+        UpdatePasswordDto updatePassword = new UpdatePasswordDto("email@example.com", "TestPassword12!");
+        doNothing().when(memberService).updatePassword(any());
+
+        mockMvc.perform(post("/member/update-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updatePassword))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
     }
 }
