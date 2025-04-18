@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neutral.newspaper.jwt.JwtToken;
 import com.neutral.newspaper.member.controller.MemberController;
+import com.neutral.newspaper.member.dto.FindPasswordDto;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
 import com.neutral.newspaper.member.dto.UpdatePasswordDto;
@@ -80,6 +81,20 @@ public class MemberControllerTest {
         mockMvc.perform(post("/member/update-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatePassword))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+    }
+
+    @WithMockUser
+    @Test
+    @DisplayName("비밀번호 초기화 코드 전송 성공 시 204 반환")
+    void successSendingPasswordResetCode() throws Exception {
+        FindPasswordDto findPasswordRequest = new FindPasswordDto("email@example.com", "010-1234-5678");
+        doNothing().when(memberService).sendPasswordResetCode(any());
+
+        mockMvc.perform(post("/member/send-password-code")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(findPasswordRequest))
                         .with(csrf()))
                 .andExpect(status().isNoContent());
     }
