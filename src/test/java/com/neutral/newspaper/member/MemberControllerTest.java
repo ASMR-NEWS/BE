@@ -15,6 +15,7 @@ import com.neutral.newspaper.member.dto.FindPasswordDto;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
 import com.neutral.newspaper.member.dto.UpdatePasswordDto;
+import com.neutral.newspaper.member.dto.VerifyCodeDto;
 import com.neutral.newspaper.member.service.MemberService;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -95,6 +96,20 @@ public class MemberControllerTest {
         mockMvc.perform(post("/member/send-password-code")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(findPasswordRequest))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+    }
+
+    @WithMockUser
+    @Test
+    @DisplayName("비밀번호 초기화 코드 인증 성공 시 204 반환")
+    void successVerifyingCode() throws Exception {
+        VerifyCodeDto verifyCodeRequest = new VerifyCodeDto("email@example.com", "123456");
+        doNothing().when(memberService).verifyCode(any());
+
+        mockMvc.perform(post("/member/verify-code")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(verifyCodeRequest))
                         .with(csrf()))
                 .andExpect(status().isNoContent());
     }
