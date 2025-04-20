@@ -14,6 +14,7 @@ import com.neutral.newspaper.member.controller.MemberController;
 import com.neutral.newspaper.member.dto.FindPasswordDto;
 import com.neutral.newspaper.member.dto.JoinRequestDto;
 import com.neutral.newspaper.member.dto.LoginRequestDto;
+import com.neutral.newspaper.member.dto.ResetPasswordDto;
 import com.neutral.newspaper.member.dto.UpdatePasswordDto;
 import com.neutral.newspaper.member.dto.VerifyCodeDto;
 import com.neutral.newspaper.member.service.MemberService;
@@ -110,6 +111,20 @@ public class MemberControllerTest {
         mockMvc.perform(post("/member/verify-code")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(verifyCodeRequest))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+    }
+
+    @WithMockUser
+    @Test
+    @DisplayName("비밀번호 초기화 성공 시 204 반환")
+    void successResetCode() throws Exception {
+        ResetPasswordDto resetPasswordRequest = new ResetPasswordDto("email@example.com", "NewPassword12!");
+        doNothing().when(memberService).resetPassword(any());
+
+        mockMvc.perform(post("/member/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(resetPasswordRequest))
                         .with(csrf()))
                 .andExpect(status().isNoContent());
     }
